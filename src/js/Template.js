@@ -1,5 +1,6 @@
 import * as THREE from 'three'
-import OrbitControls from 'three-orbitcontrols'
+import CameraControls from 'camera-controls'
+CameraControls.install( { THREE: THREE } )
 
 import vertexShader from '../glsl/vertexShader.vert'
 import fragmentShader from '../glsl/fragmentShader.frag'
@@ -21,15 +22,10 @@ export default class Template {
             aspect: this.containerSize.width / this.containerSize.height,
             near: 1,
             far: 1000,
-            target: new THREE.Vector3(0, 0, 50),
+            target: new THREE.Vector3(0, 0, 100),
         }
 
-        this.camera = new THREE.PerspectiveCamera(
-            this.cameraProps.fov,
-            this.cameraProps.aspect,
-            this.cameraProps.near,
-            this.cameraProps.far,
-        )
+        this.camera = null
         this.initCamera()
 
         /**
@@ -67,17 +63,29 @@ export default class Template {
         /**
          * Controler
          */
-        this.controler = null
         this.controlerProps = {
             zoom: {
                 min: 15,
                 max: 200,
-                speed: 0.2
+            },
+            azimuth: {
+                min: -Infinity,
+                max: Infinity
+            },
+            polar: {
+                min: 0,
+                max: Math.PI
             },
             rotateSpeed: 0.1,
             damping: 1
         }
+
+        this.clock = new THREE.Clock()
+        this.delta = this.clock.getDelta()
+        this.controler = null
         this.initControler()
+
+        setTimeout( () => this.rotateCamera(this.controler, 1, 2), 2000)
 
         /**
          * Events & Animation
@@ -86,6 +94,17 @@ export default class Template {
 
         this.loop = this.loop.bind(this)
         this.loop()
+    }
+
+    /**
+     * Animations
+     */
+    rotateCamera(_camera, _azimuth, _polar) {
+        _camera.rotate(
+            _azimuth,
+            _polar,
+            true
+        )
     }
 
     /**
@@ -106,28 +125,37 @@ export default class Template {
      * Init configurations
      */
     initCamera() {
+        this.camera = new THREE.PerspectiveCamera(
+            this.cameraProps.fov,
+            this.cameraProps.aspect,
+            this.cameraProps.near,
+            this.cameraProps.far,
+        )
+
         this.camera.lookAt(this.cameraProps.target)
-        this.camera.position.set(0, 0, this.cameraProps.far)
         this.camera.updateProjectionMatrix()
     }
 
     initControler() {
-        this.controler =  new OrbitControls(this.camera, this.renderer.domElement)
+        this.controler =  new CameraControls(this.camera, this.renderer.domElement)
+
+        this.controler.dollyTo(20, true)
+
         this.controler.minDistance = this.controlerProps.zoom.min
         this.controler.maxDistance = this.controlerProps.zoom.max
-        this.controler.rotateSpeed = this.controlerProps.zoom.speed
-        this.controler.autoRotate = true
-        this.controler.autoRotateSpeed = this.controlerProps.rotateSpeed
+        this.controler.dampingFactor = this.controlerProps.damping
+        this.controler.azimuthRotateSpeed = this.controlerProps.rotateSpeed
+
         this.controler.enableDamping = true
         this.controler.enablePan = false
-        this.dampingFactor = this.controlerProps.damping
     }
 
     /**
      * Animate
      */
     update() {
-        this.controler.update()
+        this.delta = this.clock.getDelta() / 4
+        this.controler.update(this.delta)
         this.renderer.setSize(this.containerSize.width, this.containerSize.height)
     }
 
