@@ -63,10 +63,11 @@ export default class Template {
         /**
          * Controler
          */
-        this.controlerProps = {
+        this.controllerProps = {
+            deltaDevider: 8,
             zoom: {
                 min: 15,
-                max: 200,
+                max: 50,
             },
             azimuth: {
                 min: -Infinity,
@@ -76,21 +77,28 @@ export default class Template {
                 min: 0,
                 max: Math.PI
             },
-            rotateSpeed: 0.1,
-            damping: 1
+            rotateSpeed: 0.8,
+            damping: 1,
         }
 
         this.clock = new THREE.Clock()
         this.delta = this.clock.getDelta()
-        this.controler = null
+        this.controller = null
         this.initControler()
 
-        setTimeout( () => this.rotateCamera(this.controler, 1, 2), 2000)
+        // setTimeout( () => this.rotateCamera(this.controller, 1, 2), 2000)
 
         /**
          * Events & Animation
          */
         window.addEventListener('resize', () => this.resize())
+
+        document.addEventListener('keydown', (_e) => {
+            if(_e.keyCode === 38) { this.truckCamera(this.controller, 0, 10) }
+            else if (_e.keyCode === 40) { this.truckCamera(this.controller, 0, -10) }
+            else if (_e.keyCode === 37) { this.truckCamera(this.controller, -10, 0) }
+            else if (_e.keyCode === 39) { this.truckCamera(this.controller, 10, 0) }
+        })
 
         this.loop = this.loop.bind(this)
         this.loop()
@@ -101,10 +109,14 @@ export default class Template {
      */
     rotateCamera(_camera, _azimuth, _polar) {
         _camera.rotate(
-            _azimuth,
-            _polar,
+            _azimuth++,
+            _polar++,
             true
         )
+    }
+
+    truckCamera(_camera, _x, _y) {
+        _camera.truck(_x, _y, true)
     }
 
     /**
@@ -137,25 +149,25 @@ export default class Template {
     }
 
     initControler() {
-        this.controler =  new CameraControls(this.camera, this.renderer.domElement)
+        this.controller =  new CameraControls(this.camera, this.renderer.domElement)
 
-        this.controler.dollyTo(20, true)
+        this.controller.dollyTo(20, true)
 
-        this.controler.minDistance = this.controlerProps.zoom.min
-        this.controler.maxDistance = this.controlerProps.zoom.max
-        this.controler.dampingFactor = this.controlerProps.damping
-        this.controler.azimuthRotateSpeed = this.controlerProps.rotateSpeed
+        this.controller.minDistance = this.controllerProps.zoom.min
+        this.controller.maxDistance = this.controllerProps.zoom.max
+        this.controller.dampingFactor = this.controllerProps.damping
+        this.controller.azimuthRotateSpeed = this.controllerProps.rotateSpeed
 
-        this.controler.enableDamping = true
-        this.controler.enablePan = false
+        this.controller.enableDamping = true
+        this.controller.enablePan = false
     }
 
     /**
      * Animate
      */
     update() {
-        this.delta = this.clock.getDelta() / 4
-        this.controler.update(this.delta)
+        this.delta = this.clock.getDelta() / this.controllerProps.deltaDevider
+        this.controller.update(this.delta)
         this.renderer.setSize(this.containerSize.width, this.containerSize.height)
     }
 
