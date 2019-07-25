@@ -53,8 +53,30 @@ export default class Template {
             color: 0xb7ff00,
             wireframe: true
         })
+
+        this.uniforms = {
+            u_time: {
+                type: 'v2',
+                value: 1.0
+            },
+            u_resolution: {
+                type: 'v2',
+                value: new THREE.Vector2()
+            },
+            u_mouse: {
+                type: 'v2',
+                value: new THREE.Vector2()
+            }
+        }
+
+        this.shaderMaterial = new THREE.ShaderMaterial({
+            uniforms: this.uniforms,
+            vertexShader: vertexShader,
+            fragmentShader: fragmentShader
+        })
+
         this.mesh = new THREE.Mesh(
-            new THREE.CubeGeometry(10, 10, 10),
+            new THREE.CubeGeometry(8, 8, 8),
             this.material
         )
         this.scene.add(this.mesh)
@@ -81,23 +103,29 @@ export default class Template {
             damping: 1,
         }
 
+        this.start = Date.now()
         this.clock = new THREE.Clock()
         this.delta = this.clock.getDelta()
         this.controller = null
         this.initControler()
 
-        // setTimeout( () => this.rotateCamera(this.controller, 1, 2), 2000)
+        setTimeout( () => this.rotateCamera(this.controller, 1, 2), 2000)
 
         /**
          * Events & Animation
          */
         window.addEventListener('resize', () => this.resize())
 
+        document.addEventListener('mousemove', (_e) => {
+            this.uniforms.u_mouse.value.x = _e.clientX
+            this.uniforms.u_mouse.value.y = _e.clientY
+        })
+
         document.addEventListener('keydown', (_e) => {
             if(_e.keyCode === 38) { this.truckCamera(this.controller, 0, 10) }
             else if (_e.keyCode === 40) { this.truckCamera(this.controller, 0, -10) }
-            else if (_e.keyCode === 37) { this.truckCamera(this.controller, -10, 0) }
-            else if (_e.keyCode === 39) { this.truckCamera(this.controller, 10, 0) }
+            else if (_e.keyCode === 37) { this.truckCamera(this.controller, 10, 0) }
+            else if (_e.keyCode === 39) { this.truckCamera(this.controller, -10, 0) }
         })
 
         this.loop = this.loop.bind(this)
@@ -131,6 +159,10 @@ export default class Template {
         this.camera.updateProjectionMatrix()
 
         this.renderer.setSize(this.containerSize.width / this.containerSize.height)
+
+        // Update Shader
+        this.uniforms.value.x = this.containerSize.width
+        this.uniforms.value.y = this.containerSize.height
     }
 
     /**
@@ -166,8 +198,9 @@ export default class Template {
      * Animate
      */
     update() {
-        this.delta = this.clock.getDelta() / this.controllerProps.deltaDevider
-        this.controller.update(this.delta)
+        this.delta = this.clock.getDelta()
+        this.uniforms.u_time.value = this.clock.elapsedTime
+        this.controller.update(this.delta / this.controllerProps.deltaDevider)
         this.renderer.setSize(this.containerSize.width, this.containerSize.height)
     }
 
