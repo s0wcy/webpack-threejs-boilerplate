@@ -22,7 +22,7 @@
     "style-loader": "^0.23.1",
     "stylus": "^0.54.5",
     "stylus-loader": "^3.0.2",
-    "three": "^0.100.0",
+    "three": "^0.125.0",
     "three-orbitcontrols": "^2.102.2",
     "webpack": "^4.35.3",
     "webpack-cli": "^3.3.6",
